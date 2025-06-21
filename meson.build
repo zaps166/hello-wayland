@@ -27,13 +27,3 @@ example = executable('layer-shell-subsurface',
     'layer-shell-subsurface.c',
     protocol_srcs,
     dependencies: deps)
-
-example = executable('egl-window',
-    'egl-window.c',
-    protocol_srcs,
-    dependencies: deps)
-
-example = executable('text-input',
-    'text-input.c',
-    protocol_srcs,
-    dependencies: deps)

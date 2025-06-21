@@ -13,7 +13,6 @@ static struct zwlr_layer_shell_v1 *layer_shell = NULL;
 static EGLDisplay egl_display;
 static EGLContext egl_context;
 static EGLConfig egl_config;
-static char running = 1;
 
 struct window {
     struct {
@@ -56,13 +55,15 @@ void layer_surface_configure (void *data, struct zwlr_layer_surface_v1 *zwlr_lay
     struct window *window = data;
     zwlr_layer_surface_v1_ack_configure (window->main.layer_surface, serial);
     wl_egl_window_resize (window->main.egl_window, width, height, 0, 0);
-    draw_surface (window->main.egl_surface, 0.0, 0.5, 1.0);
+    draw_surface (window->main.egl_surface, 0.0, 0.0, 0.0);
 }
 void layer_surface_closed (void *data, struct zwlr_layer_surface_v1 *zwlr_layer_surface_v1) {}
 
 static struct zwlr_layer_surface_v1_listener layer_surface_listener = {&layer_surface_configure, &layer_surface_closed};
 
 static void create_window (struct window *window, int32_t width, int32_t height) {
+    int32_t o = 0;
+
     window->main.surface = wl_compositor_create_surface (compositor);
     window->main.layer_surface = zwlr_layer_shell_v1_get_layer_surface (
         layer_shell,
@@ -82,12 +83,11 @@ static void create_window (struct window *window, int32_t width, int32_t height)
         window->subsurface.surface,
         window->main.surface);
     wl_subsurface_set_desync (window->subsurface.subsurface);
-    wl_subsurface_set_position (window->subsurface.subsurface, 100, 100);
-    window->subsurface.egl_window = wl_egl_window_create (window->subsurface.surface, width - 40, height - 40);
+    wl_subsurface_set_position (window->subsurface.subsurface, o, o);
+    window->subsurface.egl_window = wl_egl_window_create (window->subsurface.surface, width - o * 2, height - o * 2);
     window->subsurface.egl_surface = eglCreateWindowSurface (egl_display, egl_config, window->subsurface.egl_window, NULL);
     wl_surface_commit (window->subsurface.surface);
-    wl_display_roundtrip(display);
-    draw_surface (window->subsurface.egl_surface, 0.0, 1.0, 0.5);
+
     wl_display_roundtrip(display);
 }
 static void delete_window (struct window *window) {
@@ -117,10 +117,16 @@ int main () {
     egl_context = eglCreateContext (egl_display, egl_config, EGL_NO_CONTEXT, NULL);
 
     struct window window;
-    create_window (&window, 300, 300);
+    create_window (&window, 500, 500);
 
-    while (running) {
-        wl_display_dispatch_pending (display);
+    uint8_t r = 0;
+    while (1) {
+        float c = r / 255.0f;
+        draw_surface (window.subsurface.egl_surface, c, c, c);
+        draw_surface (window.main.egl_surface, 1.0f-c, 1.0f-c, 1.0f-c);
+        if (wl_display_dispatch_pending (display) == -1)
+            break;
+        ++r;
     }
 
     delete_window (&window);

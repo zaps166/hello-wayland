@@ -6,16 +6,12 @@ endif
 
 protocols = [
     'wlr-layer-shell-unstable-v1.xml',
-    'text-input-unstable-v3.xml',
 ]
 
 if wayland_protocols.found()
     protocols += join_paths(
         wayland_protocols.get_pkgconfig_variable('pkgdatadir'),
         'stable/xdg-shell/xdg-shell.xml')
-else
-    # use bundled xdg-shell.xml
-    protocols += 'xdg-shell.xml'
 endif
 
 gen_client_header = generator(prog_wayland_scanner,
